@@ -1,6 +1,6 @@
 # Getting Started with vLLM on CPU
 
-[![Status](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Anaconda-Labs/vllm-cpu-guide/main/.github/badges/status.json?0&cacheSeconds=300)](https://github.com/Anaconda-Labs/vllm-cpu-guide)
+[![Status](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Anaconda-Labs/vllm-cpu-guide/main/.github/badges/status.json?1778085841&cacheSeconds=300)](https://github.com/Anaconda-Labs/vllm-cpu-guide)
 
 
 **Estimated Time:** 20-25 minutes
