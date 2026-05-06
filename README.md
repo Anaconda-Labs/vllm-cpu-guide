@@ -14,7 +14,7 @@
 
 ---
 
-## What This Tutorial Teaches
+## Learning Objectives
 
 This tutorial teaches you how to serve and query large language models using vLLM on GPU infrastructure, specifically designed for Outerbounds GPU workstations.
 
