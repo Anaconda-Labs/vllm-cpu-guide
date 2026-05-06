@@ -1,0 +1,12 @@
+name: vllm-cpu-demo
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - vllm==0.4.2
+      - requests==2.31.0
+      - fastapi==0.104.1
+      - uvicorn==0.24.0
