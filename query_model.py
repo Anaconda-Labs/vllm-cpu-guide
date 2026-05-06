@@ -93,6 +93,9 @@ def main():
             print(f"✓ Response: {result['text']}")
             print(f"  Tokens: {result['tokens']}")
             print(f"  Time: {result['time']:.2f}s")
+            if result['tokens'] > 0 and result['time'] > 0:
+                tokens_per_sec = result['tokens'] / result['time']
+                print(f"  Speed: {tokens_per_sec:.1f} tokens/second (GPU accelerated)")
         else:
             print(f"❌ Error: {result['error']}")
 
@@ -100,6 +103,8 @@ def main():
 
     print("=" * 50)
     print("Query complete!")
+    print("\nWith GPU acceleration, you should see ~100-200 tokens/second.")
+    print("Compare this to CPU inference which typically achieves <10 tokens/second!")
     print("\nTip: Modify the prompts list in this script to try your own queries.")
 
 if __name__ == "__main__":

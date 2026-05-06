@@ -20,15 +20,38 @@ def check_vllm_installation():
     except ImportError:
         print("❌ vLLM is not installed")
         print("   Run: conda env create -f environment.yml")
-        print("   Then: conda activate vllm-cpu-demo")
+        print("   Then: conda activate vllm-gpu-demo")
+        return False
+
+def check_gpu():
+    """Verify that GPU and CUDA are available."""
+    print("\nStep 2: Checking GPU availability")
+    print("-" * 50)
+
+    try:
+        import torch
+        if torch.cuda.is_available():
+            gpu_name = torch.cuda.get_device_name(0)
+            gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1024**3
+            print(f"✓ CUDA is available")
+            print(f"✓ GPU detected: {gpu_name}")
+            print(f"✓ GPU memory: {gpu_memory:.1f} GB")
+            return True
+        else:
+            print("❌ CUDA is not available")
+            print("   Ensure you're on a GPU-enabled workstation")
+            print("   Run: nvidia-smi to check GPU status")
+            return False
+    except ImportError:
+        print("❌ PyTorch is not installed")
         return False
 
 def check_dependencies():
     """Verify that required dependencies are installed."""
-    print("\nStep 2: Checking dependencies")
+    print("\nStep 3: Checking dependencies")
     print("-" * 50)
 
-    required = ["requests", "fastapi", "uvicorn"]
+    required = ["requests", "torch"]
     all_present = True
 
     for package in required:
@@ -48,6 +71,7 @@ def print_instructions():
     print("=" * 50)
     print()
     print("✓ Environment setup is complete!")
+    print("✓ GPU is ready for vLLM!")
     print()
     print("To complete the tutorial, follow these steps:")
     print()
@@ -56,18 +80,19 @@ def print_instructions():
     print()
     print("2. WAIT FOR SERVER TO START")
     print("   Wait until you see: 'Uvicorn running on http://0.0.0.0:8000'")
-    print("   This may take 1-2 minutes on first run (downloading model)")
+    print("   First run may take 1-2 minutes (downloading model)")
     print()
     print("3. QUERY THE MODEL (open a NEW terminal):")
-    print("   conda activate vllm-cpu-demo")
+    print("   conda activate vllm-gpu-demo")
     print("   python query_model.py")
     print()
-    print("4. OBSERVE THE RESULTS")
-    print("   You should see generated text responses from the model")
+    print("4. OBSERVE GPU PERFORMANCE")
+    print("   Watch GPU utilization with: watch -n 1 nvidia-smi")
+    print("   You should see fast token generation (~100-200 tokens/sec)")
     print()
     print("=" * 50)
-    print("\nNote: This tutorial uses a small model (opt-125m) that runs")
-    print("      efficiently on CPU without requiring a GPU.")
+    print("\nNote: This tutorial uses GPU acceleration for fast inference.")
+    print("      Model: opt-125m (~500MB GPU memory)")
     print()
 
 def main():
@@ -82,6 +107,12 @@ def main():
     # Check installation
     vllm_ok = check_vllm_installation()
     if not vllm_ok:
+        sys.exit(1)
+
+    gpu_ok = check_gpu()
+    if not gpu_ok:
+        print("\n❌ GPU not available. This tutorial requires a GPU workstation.")
+        print("   Use an Outerbounds GPU workstation or similar Linux GPU instance.")
         sys.exit(1)
 
     deps_ok = check_dependencies()

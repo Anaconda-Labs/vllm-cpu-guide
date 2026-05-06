@@ -1,9 +1,9 @@
-# Getting Started with vLLM on CPU
+# Getting Started with vLLM on GPU
 
 [![Status](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Anaconda-Labs/vllm-cpu-guide/main/.github/badges/status.json?1778085841&cacheSeconds=300)](https://github.com/Anaconda-Labs/vllm-cpu-guide)
 
 
-**Estimated Time:** 20-25 minutes
+**Estimated Time:** 15-20 minutes
 
 ---
 
@@ -16,23 +16,25 @@
 
 ## What This Tutorial Teaches
 
-This tutorial teaches you how to serve and query large language models locally using vLLM's CPU backend, without requiring GPU hardware.
+This tutorial teaches you how to serve and query large language models using vLLM on GPU infrastructure, specifically designed for Outerbounds GPU workstations.
 
 ---
 
 ## Who This Is For
 
-**Target Audience:** Python developers and data scientists who want to experiment with LLM inference locally without GPU access.
+**Target Audience:** Python developers and data scientists who want to deploy high-performance LLM inference using vLLM on GPU infrastructure.
 
 **Prerequisites:**
 
 **Knowledge prerequisites:**
 - Familiar with Python basics and command-line operations
 - Understanding of basic API concepts (making HTTP requests)
+- Basic familiarity with remote development environments
 
 **Installation prerequisites:**
+- Access to an Outerbounds GPU workstation or similar Linux GPU instance
 - conda or mamba installed (see [install guide](https://docs.conda.io/projects/conda/en/latest/user-guide/install/))
-- At least 8GB of RAM available
+- At least 8GB GPU VRAM (for the example model)
 
 ---
 
@@ -40,9 +42,9 @@ This tutorial teaches you how to serve and query large language models locally u
 
 By completing this tutorial, you will be able to:
 
-1. **Configure** a vLLM server to run on CPU for local LLM inference
-2. **Deploy** a small language model using vLLM's OpenAI-compatible API
-3. **Query** the model programmatically using Python requests
+1. **Deploy** vLLM server on GPU infrastructure for fast LLM inference
+2. **Configure** a language model using vLLM's OpenAI-compatible API
+3. **Query** the model programmatically and measure GPU performance benefits
 
 ---
 
@@ -51,29 +53,38 @@ By completing this tutorial, you will be able to:
 ### 1. Clone this repository
 
 ```bash
-cd /Users/dbouquin/Documents/vllm-cpu-guide
+git clone https://github.com/Anaconda-Labs/vllm-cpu-guide.git
+cd vllm-cpu-guide
 ```
 
 ### 2. Create the conda environment
 
 ```bash
 conda env create -f environment.yml
-conda activate vllm-cpu-demo
+conda activate vllm-gpu-demo
 ```
 
-### 3. Run the tutorial script
+### 3. Verify GPU availability
+
+```bash
+nvidia-smi
+```
+
+You should see your GPU listed. If not, ensure you're on a GPU-enabled workstation.
+
+### 4. Run the tutorial script
 
 ```bash
 python tutorial.py
 ```
 
-### 4. Verify your setup
+### 5. Verify your setup
 
-The script will start a vLLM server and query it. You should see:
+The script will check your GPU and provide instructions. You should see:
 ```
-✓ vLLM server starting on http://localhost:8000
-✓ Model loaded: facebook/opt-125m
-✓ Response received from model
+✓ vLLM is installed
+✓ GPU detected: NVIDIA A100 (or similar)
+✓ CUDA available
 ```
 
 ---
@@ -85,6 +96,7 @@ This tutorial uses:
 | Service | Type | Fallback | Notes |
 |---------|------|----------|-------|
 | Hugging Face Hub | External with fallback | Model cached locally after first download | Internet required for first run only |
+| NVIDIA GPU | Required | None | Outerbounds workstations or similar GPU infrastructure |
 
 ---
 
@@ -93,82 +105,109 @@ This tutorial uses:
 ### Section 1: Environment Setup
 
 **Starting state:** Before starting this section, you should have:
-- Conda environment activated (`vllm-cpu-demo`)
+- Conda environment activated (`vllm-gpu-demo`)
 - Terminal open in the project directory
+- GPU-enabled workstation (Outerbounds or similar)
 
 **What you'll do:**
-- Verify vLLM installation
-- Understand CPU backend configuration
+- Verify vLLM and GPU availability
+- Check CUDA installation
 
 **Steps:**
 
-1. **Verify vLLM is installed**
+1. **Verify GPU is accessible**
 
-   Check that vLLM is available in your environment:
+   Check that your GPU is visible:
+
+   ```bash
+   nvidia-smi
+   ```
+
+   You should see output showing your GPU (e.g., A100, V100, T4).
+
+2. **Verify vLLM is installed**
+
+   Check that vLLM is available:
 
    ```bash
    python -c "import vllm; print(f'vLLM version: {vllm.__version__}')"
    ```
 
-2. **Understand the CPU backend**
+3. **Check CUDA availability**
 
-   vLLM automatically detects when no GPU is available and falls back to CPU inference. For this tutorial, we'll use a small model (125M parameters) that runs efficiently on CPU.
+   Verify PyTorch can access the GPU:
+
+   ```bash
+   python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}'); print(f'GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"None\"}')"
+   ```
 
 **Checkpoint:** At the end of this section, you should see:
 ```
-vLLM version: 0.4.2
+vLLM version: 0.6.0
+CUDA available: True
+GPU: NVIDIA A100-SXM4-40GB (or similar)
 ```
 
-If you see: `ModuleNotFoundError: No module named 'vllm'`
-**Solution:** Ensure you activated the conda environment: `conda activate vllm-cpu-demo`
+If you see: `CUDA available: False`
+**Solution:** Ensure you're on a GPU workstation and CUDA toolkit is properly installed
 
 ---
 
 ### Section 2: Starting the vLLM Server
 
-**Starting state:** Before starting this section, you should have vLLM installed and verified.
+**Starting state:** Before starting this section, you should have vLLM installed, GPU verified, and CUDA available.
 
 **What you'll do:**
-- Launch a vLLM server with a small language model
-- Configure the server for CPU-only inference
+- Launch a vLLM server with GPU acceleration
+- Configure the server to use your GPU
 
 **Steps:**
 
-1. **Start the server in the background**
+1. **Start the server**
 
    Open a new terminal, activate the environment, and run:
 
    ```bash
-   conda activate vllm-cpu-demo
+   conda activate vllm-gpu-demo
    python start_server.py
    ```
 
-   This starts a vLLM server using the `facebook/opt-125m` model.
+   This starts a vLLM server using the `facebook/opt-125m` model with GPU acceleration.
 
-2. **Wait for the model to load**
+2. **Monitor GPU usage (optional)**
 
-   You'll see output indicating the model is downloading (first run) and loading into memory. This takes 1-2 minutes on CPU.
+   In another terminal, watch GPU utilization:
+
+   ```bash
+   watch -n 1 nvidia-smi
+   ```
+
+   You'll see GPU memory usage increase as the model loads.
+
+3. **Wait for the model to load**
+
+   You'll see output indicating the model is downloading (first run) and loading into GPU memory. This takes 30-60 seconds with GPU.
 
 **Checkpoint:** You should see:
 ```
 INFO:     Started server process
-INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000
+INFO:     Using GPU: NVIDIA A100-SXM4-40GB
 ```
 
 If you see: `RuntimeError: CUDA not available`
-**Solution:** This is expected! vLLM will automatically fall back to CPU. Ignore this message.
+**Solution:** Check that you're on a GPU workstation and run `nvidia-smi` to verify GPU access
 
 ---
 
 ### Section 3: Querying the Model
 
-**Starting state:** Before starting this section, you should have the vLLM server running on port 8000.
+**Starting state:** Before starting this section, you should have the vLLM server running on port 8000 with GPU acceleration.
 
 **What you'll do:**
-- Send API requests to the running model
-- Parse and display model responses
+- Send API requests to the GPU-accelerated model
+- Measure GPU performance benefits
 
 **Steps:**
 
@@ -177,21 +216,24 @@ If you see: `RuntimeError: CUDA not available`
    In a new terminal window (keep the server running), run:
 
    ```bash
-   conda activate vllm-cpu-demo
+   conda activate vllm-gpu-demo
    python query_model.py
    ```
 
-2. **Examine the response**
+2. **Observe GPU acceleration**
 
-   The script sends a prompt to the model and prints the generated text.
+   The script sends prompts to the model and measures response time. With GPU acceleration, generation is significantly faster than CPU.
 
 **Checkpoint:** You should now see output like:
 ```
 Prompt: "Once upon a time"
 Response: "Once upon a time, there was a small village..."
 Tokens generated: 50
-Time taken: ~2.3 seconds
+Time taken: ~0.3 seconds (GPU accelerated)
+Tokens per second: ~166
 ```
+
+Compare this to CPU inference which would take 2-5 seconds for the same task!
 
 ---
 
@@ -256,23 +298,26 @@ Want to go further? Try these optional challenges:
 
 ## Common Mistakes to Avoid
 
-### Mistake 1: Using models that are too large for CPU
+### Mistake 1: Using models larger than GPU memory
 
 ❌ **Don't do this:**
 ```python
-# This will be extremely slow or crash on CPU
+# This will crash if your GPU has less than 80GB VRAM
 model = "meta-llama/Llama-2-70b"
 ```
 
 ✅ **Do this instead:**
 ```python
-# Use small models optimized for CPU inference
-model = "facebook/opt-125m"  # 125M parameters
-# or
-model = "gpt2"  # 124M parameters
+# Match model size to your GPU memory
+# For 40GB GPU (A100):
+model = "meta-llama/Llama-2-13b"  # ~26GB VRAM
+# For 16GB GPU (T4):
+model = "facebook/opt-6.7b"  # ~13GB VRAM
+# For this tutorial:
+model = "facebook/opt-125m"  # ~500MB VRAM
 ```
 
-**Why:** Large models (>1B parameters) are impractical on CPU due to memory and speed constraints.
+**Why:** Models must fit in GPU VRAM. Check your GPU memory with `nvidia-smi`.
 
 ### Mistake 2: Forgetting to wait for server startup
 
@@ -286,11 +331,11 @@ query_model()  # This will fail!
 ✅ **Do this instead:**
 ```python
 start_server()
-time.sleep(30)  # Wait for model to load
+time.sleep(10)  # Wait for model to load on GPU
 query_model()
 ```
 
-**Why:** Model loading takes time, especially on CPU. The server needs to fully initialize before accepting requests.
+**Why:** Model loading takes time (even on GPU). The server needs to fully initialize before accepting requests.
 
 ---
 
@@ -322,16 +367,32 @@ conda init bash  # or zsh, fish, etc.
 
 ---
 
-### Issue: Model generation is very slow
+### Issue: Model generation is slower than expected
 
-**Symptoms:** Each token takes >1 second to generate
+**Symptoms:** Each token takes >0.1 seconds to generate on GPU
 
-**Solution:** This is expected on CPU! For faster inference:
-- Use smaller models (opt-125m, gpt2)
-- Reduce max_tokens in your queries
-- Consider using a GPU-enabled machine for production workloads
+**Solution:** Check these common causes:
+- GPU memory is full (check `nvidia-smi`)
+- Other processes are using the GPU
+- Model is larger than optimal for your GPU
+- Not enough GPU warming up time
 
-**Why this happens:** CPU inference is significantly slower than GPU. This tutorial prioritizes accessibility over speed.
+**Why this happens:** vLLM needs exclusive GPU access for best performance. Close other GPU applications.
+
+---
+
+### Issue: CUDA out of memory error
+
+**Symptoms:** Error message: `RuntimeError: CUDA out of memory`
+
+**Solution:**
+```bash
+# Use a smaller model
+# Or reduce max_model_len parameter in start_server.py
+--max-model-len 2048  # Reduces memory usage
+```
+
+**Why this happens:** The model + context window exceeds available GPU memory.
 
 ---
 
